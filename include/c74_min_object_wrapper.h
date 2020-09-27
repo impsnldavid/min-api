@@ -38,7 +38,7 @@ namespace c74::min {
         try {
             const atom_reference args(ac, av);
             long           attrstart = attr_args_offset(static_cast<short>(args.size()), args.begin());    // support normal arguments
-            auto           self      = static_cast<minwrap<min_class_type>*>(max::object_alloc(this_class));
+            auto           self      = static_cast<minwrap<min_class_type>*>(max::object_alloc(this_class<min_class_type>::instance));
             auto           self_ob   = reinterpret_cast<max::t_object*>(self);
 
             self->m_min_object.assign_instance(self_ob);    // maxobj needs to be set prior to placement new
@@ -677,10 +677,10 @@ namespace c74::min {
 
     template<class min_class_type, enable_if_not_jitter_class<min_class_type> = 0>
     void wrap_as_max_external(const char* cppname, const char* maxname, void* resources, min_class_type* instance = nullptr) {
-        if (this_class != nullptr)
+        if (this_class<min_class_type>::instance != nullptr)
             return;
 
-        this_class_init = true;
+        this_class<min_class_type>::init = true;
 
         std::unique_ptr<min_class_type> dummy_instance = nullptr;
 
@@ -702,8 +702,8 @@ namespace c74::min {
 
         instance->try_call("maxclass_setup", c);
         wrap_as_max_external_finish<min_class_type>(c, *instance);
-        this_class = c;
-        this_class_dummy_constructed = true;
+        this_class<min_class_type>::instance = c;
+        this_class<min_class_type>::dummy_constructed = true;
      }
 
 
@@ -712,10 +712,10 @@ namespace c74::min {
         using c74::max::class_addmethod;
         using c74::max::method;
 
-        if (this_class != nullptr)
+        if (this_class<min_class_type>::instance != nullptr)
             return;
 
-        this_class_init = true;
+        this_class<min_class_type>::init = true;
 
         std::unique_ptr<min_class_type> dummy_instance = nullptr;
         auto                            maxname        = deduce_maxclassname(cmaxname);
@@ -868,12 +868,12 @@ namespace c74::min {
         this_class_name = symbol(cppname);
 
         max::class_register(max::CLASS_BOX, c);
-        this_class = c;
+        this_class<min_class_type>::instance = c;
 
-        // documentation update (if neccessary)
+        // documentation update (if necessary)
         doc_update<min_class_type>(*instance, maxname, cppname);
 
-        this_class_dummy_constructed = true;
+        this_class<min_class_type>::dummy_constructed = true;
     }
 
     #undef MIN_WRAPPER_ADDMETHOD

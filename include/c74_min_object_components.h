@@ -466,20 +466,21 @@ namespace c74::min {
                 start = maxname;
         }
 
-        const char* end = strstr(start, "_tilde.cpp");    // audio objects
-        if (end) {
+    	// remove file extension
+        const char* end = strrchr(start, '.');
+        if (!end)
+            end = start + strlen(start);
+        if (!strcmp(end, ".h") || !strcmp(end, ".hpp") || !strcmp(end, ".cpp"))
             smaxname.assign(start, end - start);
-            smaxname += '~';
-        }
-        else {    // all other objects
-            const char* end = strrchr(start, '.');
-            if (!end)
-                end = start + strlen(start);
-            if (!strcmp(end, ".cpp"))
-                smaxname.assign(start, end - start);
-            else
-                smaxname = start;
-        }
+        else
+            smaxname = start;
+
+    	// substitute the last occurance of '_tilde' for '~' for audio objects
+    	const std::string stilde = "_tilde";
+    	std::size_t starttilde = smaxname.rfind(stilde);
+    	if (starttilde != std::string::npos)
+    		smaxname.replace(starttilde, stilde.length(), "~");
+    	
         return smaxname;
     }
 

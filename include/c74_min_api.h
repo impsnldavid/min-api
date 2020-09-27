@@ -302,18 +302,25 @@ namespace c74::min {
 
 
 namespace c74::min {
-    static max::t_class*    this_class                      { nullptr };
-    static bool             this_class_init                 { false };
-    static max::t_symbol*   this_class_name                 { nullptr };
-    static bool             this_class_dummy_constructed    { false };
+	static bool     all_classes_dummy_constructed   { false };
+	
+    template<class min_class_type>
+	struct this_class
+    {
+	    inline static max::t_class*    instance                      { nullptr };
+	    inline static bool             init                          { false };
+	    inline static max::t_symbol*   name                          { nullptr };
+	    inline static bool             dummy_constructed             { false };
+    };
 
 
     /// Find out if the current class instance is a dummy instance.
     /// The dummy instance is used for the initial class reflection and wrapper configuration.
     /// All instances after that point are valid (non-dummy) instances.
 
+	template <class min_class_type>
     inline bool dummy() {
-        return this_class_dummy_constructed == false;
+        return this_class<min_class_type>::dummy_constructed == false;
     }
 
 
@@ -324,7 +331,7 @@ namespace c74::min {
     /// Because this throws an exception you should **not** call this function in an audio perform routine.
 
     inline void error(const std::string& description) {
-        if (!c74::min::dummy())
+        if (all_classes_dummy_constructed)
             throw std::runtime_error(description);
         else
             std::cerr << description << std::endl;
@@ -408,7 +415,7 @@ void wrap_as_max_external(const char* cppname, const char* maxname, void* resour
 
 
 /// Wrap a class that extends min::object for use in the Max environment.
-/// The name of your Max object will be the same as that of your *source file name* minus the ".cpp" suffix.
+/// The name of your Max object will be the same as that of your *source file name* minus the .cpp/.h/.hpp suffix.
 /// If your filename ends with "_tilde" the name will be substituted with a "~" character at the end.
 /// @param	cpp_classname	The name of your class.
 /// @see					MIN_EXTERNAL_CUSTOM
@@ -416,6 +423,7 @@ void wrap_as_max_external(const char* cppname, const char* maxname, void* resour
 #define MIN_EXTERNAL(cpp_classname)                                                                                                        \
     void ext_main(void* r) {                                                                                                               \
         c74::min::wrap_as_max_external<cpp_classname>(#cpp_classname, __FILE__, r);                                                        \
+        all_classes_dummy_constructed = true;                                                                                              \
     }
 
 
@@ -430,4 +438,33 @@ void wrap_as_max_external(const char* cppname, const char* maxname, void* resour
 #define MIN_EXTERNAL_CUSTOM(cpp_classname, max_name)                                                                                       \
     void ext_main(void* r) {                                                                                                               \
         c74::min::wrap_as_max_external<cpp_classname>(#cpp_classname, #max_name, r);                                                       \
+        all_classes_dummy_constructed = true;                                                                                              \
+    }
+
+/// Declare a function to wrap a class that extends min::object for use in the Max environment.
+/// This should only be used when the ext_main function need to be manually defined. For most scenarios use MIN_EXTERNAL.
+/// The function will be named 'wrap_[cpp_classname]'.
+/// The name of your Max object will be the same as that of your *source file name* minus the .cpp/.h/.hpp suffix.
+/// If your filename ends with "_tilde" the name will be substituted with a "~" character at the end.
+/// @param	cpp_classname	The name of your class.
+/// @see					MIN_EXTERNAL_WRAP_FUNCTION_CUSTOM
+
+#define MIN_EXTERNAL_WRAP_FUNCTION(cpp_classname)													                                       \
+    void wrap_##cpp_classname(void* r) {												                                                   \
+        c74::min::wrap_as_max_external<cpp_classname>(#cpp_classname, __FILE__, r);		                                                   \
+    }
+
+/// Declare a function to wrap a class that extends min::object for use in the Max environment.
+/// This should only be used when the ext_main function need to be manually defined. For most scenarios use MIN_EXTERNAL_CUSTOM.
+/// The function will be named 'wrap_[cpp_classname]'.
+/// The recommended model is to name your file consistent with Min conventions and
+/// use the #MIN_EXTERNAL_WRAP_FUNCTION macro instead of this one.
+///
+/// @param	cpp_classname	The name of your class.
+/// @param	max_name		The name of your object as you will type it into a Max object box.
+/// @see					MIN_EXTERNAL_WRAP_FUNCTION
+
+#define MIN_EXTERNAL_WRAP_FUNCTION_CUSTOM(cpp_classname, max_name)									                                       \
+    void wrap_##cpp_classname(void* r) {												                                                   \
+        c74::min::wrap_as_max_external<cpp_classname>(#max_name, __FILE__, r);			                                                   \
     }

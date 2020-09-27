@@ -220,7 +220,7 @@ namespace c74::min {
         atom_reference args(argc, argv);
         long           attrstart = attr_args_offset(static_cast<short>(args.size()), args.begin());
         auto           cppname   = this_class_name;
-        auto           self      = static_cast<max_jit_wrapper*>(max::max_jit_object_alloc(this_class, cppname));
+        auto           self      = static_cast<max_jit_wrapper*>(max::max_jit_object_alloc(this_class<min_class_type>::instance, cppname));
         auto           o         = max::jit_object_new(cppname, s);
         auto           job       = reinterpret_cast<minwrap<min_class_type>*>(o);
 
